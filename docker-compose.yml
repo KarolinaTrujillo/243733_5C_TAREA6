@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres_container
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_DB: actividad_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./tarea6/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./tarea6/db/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+      - ./tarea6/db/migrate.sql:/docker-entrypoint-initdb.d/03-migrate.sql
+      - ./tarea6/db/reports_vw.sql:/docker-entrypoint-initdb.d/04-reports_vw.sql
+      - ./tarea6/db/indexes.sql:/docker-entrypoint-initdb.d/05-indexes.sql
+      - ./tarea6/db/roles.sql:/docker-entrypoint-initdb.d/06-roles.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d actividad_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      
+  nextjs:
+    build:
+      context: ./tarea6-karo
+      dockerfile: Dockerfile
+    container_name: nextjs_app
+    ports:
+      - "3000:3000"
+    hostname: localhost
+    environment:
+      HOSTNAME: 0.0.0.0
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: actividad_db
+      DB_USER: app_user
+      DB_PASSWORD: tarea6-karoPassword
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

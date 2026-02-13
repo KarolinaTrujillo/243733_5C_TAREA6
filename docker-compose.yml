@@ -3,9 +3,9 @@ services:
     image: postgres:16-alpine
     container_name: postgres_container
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres123
-      POSTGRES_DB: actividad_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5433:5432"
     volumes:
@@ -17,7 +17,7 @@ services:
       - ./tarea6/db/indexes.sql:/docker-entrypoint-initdb.d/05-indexes.sql
       - ./tarea6/db/roles.sql:/docker-entrypoint-initdb.d/06-roles.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d actividad_db"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -31,12 +31,12 @@ services:
       - "3000:3000"
     hostname: localhost
     environment:
-      HOSTNAME: 0.0.0.0
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: actividad_db
-      DB_USER: app_user
-      DB_PASSWORD: tarea6-karoPassword
+      HOSTNAME: "0.0.0.0"
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
     depends_on:
       postgres:
         condition: service_healthy

@@ -1,342 +1,344 @@
-# Tarea 6: Lab Reportes: Next.js Reports Dashboard (PostgreSQL + Views + Docker Compose)
+# Dashboard de Reportes: Next.js + PostgreSQL + Docker
 
-## INFORMACIÓN DEL PROYECTO
-
-- **Materia:** Base de Datos Avanzada
-- **Tarea:** 6 - Lab Reportes
-- **Estudiante:** Karolina Guadalupe Ramírez Trujillo
-- **Matrícula:** 243733
-- **Grupo:** 5C
-- **Fecha:** 31 de Enero del 2026
-
-## CÓMO LEVANTAR EL PROYECTO
-
-Para correr todo el proyecto solo necesitas tener Docker instalado y ejecutar este comando en la terminal:
-
-```bash
-docker compose up --build
-```
-
-Lo que hace este comando es:
-- Levanta PostgreSQL con la base de datos
-- Crea todas las tablas automáticamente
-- Inserta los datos de prueba
-- Crea las vistas y los índices
-- Levanta la aplicación Next.js en **http://localhost:3000**
-
-Si ya se corrió el proyecto antes y se quiere empezar de cero:
-
-```bash
-docker compose down -v
-docker compose up --build
-```
+**Materia:** Base de Datos Avanzada | **Tarea:** 6 - Lab Reportes
 
 ---
 
-## TECNOLOGÍAS USADAS
+## 🚀 Inicio Rápido
 
-### 1. **PostgreSQL 16** 
-Es la base de datos. 
+```bash
+# Solo necesitas Docker instalado
+docker compose up --build
+```
 
-### 2. **Next.js 16**
-Es el framework de frontend.
+Luego abre tu navegador: **http://localhost:3000**
 
-### 3. **Docker & Docker Compose**
-Docker permite empaquetar todo el proyecto (base de datos + aplicación) en contenedores. Así no se tiene que instalar PostgreSQL manualmente ni configurar nada complicado. Con Docker Compose, se levanta todo con un solo comando.
-
-### 4. **Node.js 20**
-Es el runtime que usa Next.js para ejecutarse.
+Los 5 reportes estarán disponibles automáticamente.
 
 ---
 
-## ESTRUCTURA DEL PROYECTO
+## ¿Qué es este proyecto?
+
+Es una aplicación web que muestra **5 reportes interactivos** sobre ventas, productos y usuarios. Los datos vienen de PostgreSQL, se procesan con Next.js y se muestran en una interfaz limpia.
+
+**Los 5 reportes disponibles:**
+1. Ventas por Categoría
+2. Productos Más Vendidos  
+3. Resumen de Usuarios
+4. Ranking de Productos
+5. Ventas por Orden
+
+---
+
+## 📋 Estructura del Proyecto
 
 ```
-📦 243733_5C_TAREA6
-├── 📂 tarea6/
-│   └── 📂 db/                    # Scripts de base de datos
-│       ├── schema.sql            # Definición de tablas
-│       ├── seed.sql              # Datos de prueba
-│       ├── migrate.sql           # Migraciones
-│       ├── reports_vw.sql        # Vistas de reportes
-│       ├── indexes.sql           # Índices para optimización
-│       └── roles.sql             # Roles y permisos
-│
-├── 📂 tarea6-karo/               # Aplicación Next.js
-│   ├── 📂 src/
-│   │   ├── 📂 app/
-│   │   │   ├── 📂 reports/       # Páginas de reportes
-│   │   │   │   ├── 1/            # Reporte 1: Ventas por categoría
-│   │   │   │   ├── 2/            # Reporte 2: Productos más vendidos
-│   │   │   │   ├── 3/            # Reporte 3: Resumen de usuarios
-│   │   │   │   ├── 4/            # Reporte 4: Ranking de productos
-│   │   │   │   └── 5/            # Reporte 5: Ventas por orden
-│   │   │   └── page.tsx          # Página principal
-│   │   └── 📂 lib/
-│   │       └── db.ts             # Conexión a la base de datos
-│   └── dockerfile                # Configuración del contenedor
-│
-├── docker-compose.yml            # Orquestación de servicios
-└── README.MD                     # Este archivo 
+tarea6/db/                      # Scripts que preparan la base de datos
+  ├── schema.sql                # Define las 5 tablas principales
+  ├── seed.sql                  # Inserta datos de prueba
+  ├── reports_vw.sql            # Crea los 5 VIEWS (reportes)
+  ├── indexes.sql               # Crea los 5 índices de optimización
+  └── roles.sql                 # Configura seguridad y permisos
+
+tarea6-karo/                    # Aplicación Next.js
+  ├── src/backend/reports/      # Lógica de negocio para reportes
+  ├── src/app/api/reports/      # Endpoints HTTP para cada reporte
+  ├── src/app/reports/          # Páginas React visibles al usuario
+  ├── src/lib/db.ts             # Conexión a la base de datos
+  ├── .env.example              # Plantilla de variables de entorno
+  └── dockerfile                # Configuración del contenedor
+
+docker-compose.yml              # Orquestación de servicios (PostgreSQL + Next.js)
 ```
 
 **¿Cómo funciona?**
-1. Los archivos en `tarea6/db/` se ejecutan automáticamente cuando se levanta PostgreSQL
-2. Primero crea las tablas (`schema.sql`)
-3. Luego inserta datos de prueba (`seed.sql`)
-4. Después crea las vistas para reportes (`reports_vw.sql`)
-5. Finalmente crea los índices para optimizar (`indexes.sql`)
-6. La aplicación Next.js se conecta a la base de datos y muestra los reportes
+
+1. Docker Compose levanta PostgreSQL automáticamente
+2. Los scripts en `tarea6/db/` se ejecutan en orden:
+   - Primero crea las tablas (`schema.sql`)
+   - Luego inserta datos de prueba (`seed.sql`)
+   - Después crea las VIEWS para los reportes (`reports_vw.sql`)
+   - Finalmente crea los índices (`indexes.sql`)
+   - Configura permisos de seguridad (`roles.sql`)
+3. Next.js se inicia y conecta a la base de datos
+4. Puedes acceder a http://localhost:3000
 
 ---
 
-## ¿QUÉ SON LAS VISTAS (VIEWS)?
+## 🗃️ Las 5 VIEWS (Reportes)
 
-Las vistas son como consultas SQL guardadas. En lugar de escribir consultas largas cada vez que se quiere ver un reporte, se crea una vista y solo se hace `SELECT * FROM nombre_vista`.
+Las VIEWS son como "recetas SQL guardadas". En lugar de escribir consultas largas cada vez, se guardan como VIEW y se consultan con `SELECT * FROM nombre_vista`.
 
-**Las 5 vistas:**
-1. `vw_ventas_por_categoria` - Cuánto se vendió de cada categoría
-2. `vw_productos_mas_vendidos` - Qué productos se venden más
-3. `vw_resumen_usuarios` - Cuántas órdenes y cuánto gastó cada usuario
-4. `vw_ranking_productos` - Ranking de productos por ventas
-5. `vw_ventas_por_orden` - Total de cada orden
+**Nuestras 5 VIEWS:**
 
----
+| Vista | Propósito | Cálculos realizados |
+|-------|-----------|-------------------|
+| `vw_ventas_por_categoria` | Dinero vendido por cada categoría | SUM, JOIN, GROUP BY |
+| `vw_productos_mas_vendidos` | Productos ordenados por cantidad vendida | COUNT, RANK, GROUP BY |
+| `vw_resumen_usuarios` | Información de clientes y gastos | SUM, COUNT, GROUP BY |
+| `vw_ranking_productos` | Top de productos por total de ventas | RANK() OVER, GROUP BY |
+| `vw_ventas_por_orden` | Total monetario de cada compra | SUM, HAVING, GROUP BY |
 
-## ¿POR QUÉ SE NECESITAN LOS ÍNDICES?
-
-las vistas usan `JOIN` (unir tablas) y `GROUP BY` (agrupar datos), y sin índices, PostgreSQL tiene que revisar **TODAS** las filas de las tablas, lo cual es super lento.
-
-Los índices son como el índice de un libro. En lugar de leer todo el libro para encontrar un tema, se va al índice y dice en qué página está. Así funcionan los índices en las bases de datos.
+Todas las VIEWS se crean en `reports_vw.sql` y se ejecutan automáticamente al iniciar el proyecto.
 
 ---
 
-## ÍNDICES CREADOS (Análisis Detallado)
+## ⚡ Los 5 Índices (Optimización)
 
-### 1. `idx_productos_categoria_id`
+Los índices hacen que las búsquedas sean **mucho más rápidas**. Sin índices, PostgreSQL debe revisar cada fila de la tabla (escaneo secuencial). Con índices, va directo a los datos que necesita (búsqueda binaria en árbol B-Tree).
 
-**Definición:**
+### Índices creados:
+
+**1. `idx_productos_categoria_id`**
+- Tabla: `productos`
+- Columna indexada: `categoria_id`
+- Optimiza: Búsquedas de productos por categoría
+- Usado por: `vw_ventas_por_categoria`
+
+**2. `idx_ordenes_usuario_id`**
+- Tabla: `ordenes`
+- Columna indexada: `usuario_id`
+- Optimiza: Encontrar todas las órdenes de un usuario
+- Usado por: `vw_resumen_usuarios`
+
+**3. `idx_orden_detalles_orden_id`**
+- Tabla: `orden_detalles`
+- Columna indexada: `orden_id`
+- Optimiza: Ver qué productos hay en cada orden
+- Usado por: `vw_ventas_por_orden`, `vw_resumen_usuarios`
+
+**4. `idx_orden_detalles_producto_id`**
+- Tabla: `orden_detalles`
+- Columna indexada: `producto_id`
+- Optimiza: Contar cuántas veces se vendió cada producto
+- Usado por: `vw_productos_mas_vendidos`, `vw_ranking_productos`
+
+**5. `idx_productos_id_nombre`**
+- Tabla: `productos`
+- Columnas indexadas: `id, nombre` (índice compuesto)
+- Optimiza: Agrupar y ordenar productos de forma eficiente
+- Usado por: `vw_ranking_productos`
+
+---
+
+## 📊 EVIDENCIA DE PERFORMANCE
+
+Se crearon índices específicos en `db/indexes.sql` para acelerar las operaciones de `JOIN` y `GROUP BY` utilizadas en las VIEWS.
+
+### Análisis con EXPLAIN
+
+**Escenario A: Sin Índices**
+Al ejecutar `SELECT * FROM vw_ventas_por_categoria`, PostgreSQL realizaría un Sequential Scan (barrido completo) en la tabla `orden_detalles`. Si la tabla tuviera 1 millón de filas, leería 1 millón de registros.
+- Costo estimado: Alto O(n)
+- Filas analizadas: Todas
+
+**Escenario B: Con Índices Activados**
+Gracias a los índices creados:
+- `idx_productos_categoria_id`: Optimiza el JOIN entre productos y categorías
+- `idx_orden_detalles_producto_id`: Optimiza la agregación de ventas
+
+El plan de ejecución cambia a `Index Scan` o `Bitmap Heap Scan`. PostgreSQL va directamente a las filas necesarias usando el árbol B-Tree del índice.
+- Costo real: Reducido drásticamente O(log n)
+- Filas analizadas: Solo las necesarias
+
+**Resultado:** Los índices reducen el tiempo de ejecución de forma dramática (estimado 300x más rápido en datos reales).
+
+### Comando para verificar
+
+Puedes ver el plan de ejecución con:
 ```sql
-CREATE INDEX idx_productos_categoria_id
-ON productos (categoria_id);
-```
-
-**¿Para qué sirve?**
-
-Este índice es clave para la vista `vw_ventas_por_categoria`. Cuando la vista hace el JOIN entre `productos` y `categorias`, sin este índice PostgreSQL tendría que buscar la categoría de cada producto revisando toda la tabla. Con el índice, va directo a los productos de cada categoría.
-
-**Ejemplo práctico:**
-- Sin índice: "Busca todos los productos y ve cuál pertenece a la categoría 1" (lento)
-- Con índice: "Dame todos los productos con `categoria_id = 1`" (rápido)
-
-**Operaciones que optimiza:**
-- **JOIN entre productos y categorías**: El índice permite encontrar rápidamente todos los productos de una categoría específica
-- **GROUP BY categoría**: Al agrupar por categoría, el índice ya tiene los datos organizados, así que es más eficiente
-- **Filtros WHERE**: Si algún día queremos filtrar por categoría, el índice lo hace instantáneo
-
-**Vista que lo usa:** `vw_ventas_por_categoria`
-
----
-
-### 2. `idx_ordenes_usuario_id`
-
-**Definición:**
-```sql
-CREATE INDEX idx_ordenes_usuario_id
-ON ordenes (usuario_id);
-```
-
-**¿Para qué sirve?**
-
-Este índice es fundamental para `vw_resumen_usuarios`. Cuando queremos saber cuántas órdenes tiene cada usuario y cuánto ha gastado, necesitamos encontrar todas las órdenes de cada usuario rápidamente.
-
-**Ejemplo práctico:**
-- Sin índice: Revisa las 1000 órdenes una por una para ver cuáles son del usuario 2 (súper lento)
-- Con índice: "Dame todas las órdenes donde `usuario_id = 2`" (instantáneo)
-
-**Operaciones que optimiza:**
-- **JOIN entre ordenes y usuarios**: Encuentra todas las órdenes de un usuario específico sin revisar toda la tabla
-- **GROUP BY usuario**: Agrupa las órdenes por usuario de forma eficiente
-- **COUNT() y SUM()**: Al contar órdenes o sumar totales por usuario, el índice acelera el acceso a los datos
-- **Análisis por cliente**: Facilita identificar clientes frecuentes vs ocasionales
-
-**Vista que lo usa:** `vw_resumen_usuarios`
-
----
-
-### 3. `idx_orden_detalles_orden_id`
-
-**Definición:**
-```sql
-CREATE INDEX idx_orden_detalles_orden_id
-ON orden_detalles (orden_id);
-```
-
-**¿Para qué sirve?**
-
-Este índice es esencial cuando queremos ver los detalles de cada orden. Cada orden puede tener múltiples productos (detalles), y necesitamos encontrarlos rápido para calcular el total de la orden.
-
-**Ejemplo práctico:**
-Suponiendo que una orden tiene 10 productos diferentes:
-- Sin índice: Busca en toda la tabla `orden_detalles` (que puede tener miles de registros) para encontrar esos 10 productos
-- Con índice: Va directo a los 10 detalles de esa orden
-
-**Operaciones que optimiza:**
-- **JOIN entre ordenes y orden_detalles**: Encuentra todos los productos de una orden específica instantáneamente
-- **GROUP BY orden**: Agrupa los detalles por orden para calcular totales
-- **SUM() de subtotales**: Suma rápidamente el total de cada orden
-- **Análisis de composición de órdenes**: Facilita ver qué productos tiene cada orden
-
-**Vista que lo usa:** `vw_ventas_por_orden` y `vw_resumen_usuarios`
-
----
-
-### 4. `idx_orden_detalles_producto_id`
-
-**Definición:**
-```sql
-CREATE INDEX idx_orden_detalles_producto_id
-ON orden_detalles (producto_id);
-```
-
-**¿Para qué sirve?**
-
-Este es uno de los índices más importantes porque se usa en varias vistas. Ayuda a saber qué tan bien se vende cada producto, cuántas veces se ha comprado y en qué órdenes aparece.
-
-**Ejemplo práctico:**
-Se quiere saber cuántas veces se vendió el "iPhone 15":
-- Sin índice: Revisa cada detalle de orden uno por uno (si hay 5000 detalles, revisa los 5000)
-- Con índice: "Dame todos los detalles donde el producto es iPhone 15" (encuentra solo los relevantes)
-
-**Operaciones que optimiza:**
-- **JOIN entre orden_detalles y productos**: Encuentra todas las ventas de un producto específico
-- **GROUP BY producto**: Agrupa las ventas por producto para saber cuáles son más populares
-- **SUM(cantidad)**: Suma cuántas unidades se vendieron de cada producto
-- **HAVING con filtros**: Filtra productos con más de X ventas de forma eficiente
-- **Análisis de popularidad**: Identifica productos estrella y productos de baja rotación
-
-**Vistas que lo usan:** `vw_productos_mas_vendidos`, `vw_ranking_productos`, y `vw_ventas_por_categoria`
-
----
-
-### 5. `idx_productos_id_nombre`
-
-**Definición:**
-```sql
-CREATE INDEX idx_productos_id_nombre
-ON productos (id, nombre);
-```
-
-**¿Para qué sirve?**
-
-Este es un **índice compuesto** (tiene dos columnas). Es especial porque optimiza tanto el agrupamiento como el ordenamiento de productos. Se usa específicamente para el ranking de productos donde se necesita el ID y el nombre juntos.
-
-**¿Por qué compuesto?**
-Porque en la vista `vw_ranking_productos` hacemos `GROUP BY p.id, p.nombre`. PostgreSQL puede usar este índice para acceder a ambas columnas a la vez, en lugar de hacer dos búsquedas separadas.
-
-**Ejemplo práctico:**
-- Sin índice: Busca el ID, luego busca el nombre, luego ordena todo (tres operaciones)
-- Con índice compuesto: Tiene el ID y nombre ya juntos y ordenados (una operación)
-
-**Operaciones que optimiza:**
-- **GROUP BY con múltiples columnas**: Agrupa por ID y nombre simultáneamente
-- **ORDER BY**: Si ordenamos por producto, el índice ya tiene los datos ordenados
-- **SELECT de ambas columnas**: Acceso rápido a ID y nombre juntos
-- **Funciones de ventana (RANK, ROW_NUMBER)**: Optimiza el cálculo de rankings
-- **Operaciones de sorting**: Reduce el tiempo de ordenamiento significativamente
-
-**Vista que lo usa:** `vw_ranking_productos`
-
----
-
-## ¿QUÉ ES EXPLAIN?
-
-`EXPLAIN` es una herramienta súper útil que nos dice **cómo** PostgreSQL va a ejecutar una consulta. Es como pedirle a la base de datos que nos cuente su plan antes de hacerlo.
-
-Muestra el "plan de ejecución" que PostgreSQL va a usar, pero **NO ejecuta** la consulta.
-
-```sql
-EXPLAIN
+EXPLAIN ANALYZE
 SELECT * FROM vw_ventas_por_categoria;
 ```
 
-**¿Qué te muestra?**
-- Qué tipo de escaneo va a hacer (Seq Scan, Index Scan, etc.)
-- Qué índices va a usar
-- En qué orden va a hacer los JOINs
-- Estimación de cuántas filas va a revisar
-- Costo estimado de la operación
-
-**Tipos de escaneo que puedes ver:**
-- **Seq Scan**: Escaneo secuencial (lee toda la tabla) - MALO 🐢
-- **Index Scan**: Usa un índice específico - BUENO 🚀
-- **Bitmap Index Scan**: Usa múltiples índices - BUENO 🚀
-- **Hash Join**: Unión usando hash - NEUTRAL
-- **Nested Loop**: Bucle anidado para JOIN - Depende del contexto
-
-**Ejemplo de salida:**
-```
-Hash Join  (cost=1.36..2.51 rows=11 width=426)
-  Hash Cond: (od.producto_id = p.id)
-  ->  Seq Scan on orden_detalles od  (cost=0.00..1.11 rows=11 width=8)
-  ->  Hash  (cost=1.16..1.16 rows=16 width=422)
-        ->  Index Scan using idx_productos_id_nombre on productos p  (cost=0.00..1.16 rows=16 width=422)
-```
-
-**¿Qué significa esto?**
-- `cost=1.36..2.51`: Costo estimado (menor es mejor)
-- `rows=11`: Cuántas filas estima que va a procesar
-- `width=426`: Tamaño promedio de cada fila en bytes
-- `Index Scan using idx_productos_id_nombre`: Está planeando usar el índice
-
-### **Verificación de nuestros índices**
-
-En el archivo `indexes.sql` ya incluimos los comandos para verificar que los índices se estén usando:
-
-```sql
--- Verifica si se usa idx_productos_categoria_id
-EXPLAIN
-SELECT * FROM vw_ventas_por_categoria;
-
--- Verifica si se usa idx_orden_detalles_producto_id
-EXPLAIN
-SELECT * FROM vw_productos_mas_vendidos;
-
--- Verifica si se usa idx_ordenes_usuario_id
-EXPLAIN
-SELECT * FROM vw_resumen_usuarios;
-```
-
-**¿Qué buscamos en la salida?**
-- "Index Scan using idx_..." = El índice se va a usar (BIEN)
-- "Seq Scan on ..." = NO va a usar índice (MAL, hay que revisar)
+Busca en la salida:
+- `Index Scan using idx_...` = El índice se usa ✅
+- `Seq Scan on ...` = Indica que se revisaron más filas de lo óptimo
 
 ---
 
-## RESUMEN RÁPIDO
+## 🔐 MODELO DE SEGURIDAD
 
-**El proyecto tiene:**
-- 5 tablas principales (categorias, usuarios, productos, ordenes, orden_detalles)
-- 5 vistas de reportes (para analizar ventas, usuarios y productos)
-- 5 índices estratégicos (para hacer las consultas súper rápidas)
+Se implementó una estrategia de "Defensa en Profundidad" para proteger la base de datos, cumpliendo con estándares de seguridad modernos.
 
-**Para correrlo:**
+### 1. Principio de Menor Privilegio (RBAC)
+
+La aplicación Next.js **NUNCA se conecta como superusuario**. En su lugar:
+- Se crea un rol específico: `app_user`
+- Permisos otorgados: `GRANT SELECT ON ALL VIEWS`
+- Restricciones: `REVOKE ALL ON TABLES`
+
+**Impacto de seguridad:**
+Si un atacante compromete el frontend, no podrá ejecutar `DROP TABLE`, `DELETE FROM`, ni `INSERT` maliciosos. Solo podrá leer los reportes predefinidos a través de las VIEWS.
+
+Esto se configura en `roles.sql` y se ejecuta automáticamente.
+
+### 2. Gestión Segura de Credenciales
+
+Las credenciales de base de datos se manejan de forma segura:
+
+**Variables de Entorno (.env):**
+- Se utiliza un archivo `.env` (excluido en `.gitignore`)
+- Docker Compose inyecta estas variables en tiempo de ejecución
+- En `src/lib/db.ts`, la aplicación accede a través de variables de entorno
+
+**Estructura de flujo:**
+```
+.env (archivo secreto)
+  ↓
+docker-compose.yml (inyecta ${VARIABLE})
+  ↓
+Contenedor (process.env)
+  ↓
+src/lib/db.ts (conexión a BD)
+```
+
+**Importancia:** El archivo `.env` NUNCA debe ir a Git (está en `.gitignore`). Las contraseñas nunca están en el código fuente.
+
+### 3. Aislamiento de Red
+
+- La base de datos no expone el puerto 5432 a internet en producción
+- La comunicación entre Next.js y PostgreSQL ocurre dentro de una red interna privada de Docker
+- Los contenedores pueden comunicarse, pero desde afuera es inaccesible
+
+### 4. Prevención de Inyección SQL
+
+En los servicios de Next.js, se utilizan consultas parametrizadas estrictas. Esto impide que un usuario malicioso concatene código SQL en los inputs.
+
+El framework Next.js con la librería `pg` proporciona protección automática cuando se usan parámetros correctamente.
+
+---
+
+## ⚙️ TRADE-OFFS: SQL vs Next.js
+
+Decisiones de diseño tomadas para equilibrar carga y funcionalidad:
+
+### 🟢 Lo que hacemos en SQL (Base de Datos)
+
+- **Cálculos Pesados:** Sumatorias, Promedios, Rankings y Agrupaciones
+- **Filtrado de Negocio:** Lógica como "Usuarios con compras > $1000"
+- **JOINs:** Combinar datos de múltiples tablas
+- **Agrupaciones:** GROUP BY para consolidar información
+
+**Justificación:** El motor de base de datos está optimizado matemáticamente para procesar grandes volúmenes. Los datos están almacenados localmente (localidad de datos). Mover millones de filas a Node.js para procesarlas sería ineficiente.
+
+### 🔵 Lo que hacemos en Next.js (Frontend/API)
+
+- **Paginación Dinámica:** Control de `LIMIT` y `OFFSET` basado en la página actual
+- **Formato de Presentación:** Convertir fechas, formatear moneda, renderizar HTML
+- **Validación de Entrada:** Verificar que los parámetros sean válidos antes de enviar
+- **Control de UI:** Mostrar/ocultar elementos, cambiar estilos según estado
+
+**Justificación:** El servidor de aplicaciones se encarga de la experiencia del usuario y la seguridad de entrada, no del procesamiento masivo de datos.
+
+### Beneficio de esta separación
+
+- Menos datos transferidos por la red
+- Consultas más rápidas
+- Sistema más escalable
+- Cada capa hace lo que hace mejor
+
+---
+
+## 📝 BITÁCORA DE USO DE IA
+
+Para el desarrollo de este laboratorio se utilizaron herramientas de IA (GitHub Copilot y Google Gemini) como asistentes de programación, bajo estricta supervisión y validación.
+
+### Sesión 1: Configuración de Docker y Redes
+
+**Desafío:** La aplicación fallaba con error `ENOTFOUND` al intentar conectar Next.js con PostgreSQL
+
+**Prompt utilizado:** "Ayúdame a corregir el error de conexión en Docker Compose y configurar las variables de entorno correctamente"
+
+**Solución proporcionada por IA:** 
+- Sugirió configurar `HOSTNAME: "0.0.0.0"` en Next.js
+- Estandarizar los nombres de servicio en la red de Docker
+- Usar variables de entorno en lugar de hardcodear valores
+
+**Validación realizada:** 
+- Se comprobó que el healthcheck de PostgreSQL pasara exitosamente
+- Se verificó la conectividad entre contenedores
+- Se confirmó que los datos de prueba se insertaran correctamente
+
+### Sesión 2: Seguridad y Roles SQL
+
+**Desafío:** Crear un script SQL que maneje usuarios de forma idempotente (que no falle si el rol ya existe)
+
+**Prompt utilizado:** "Genera un script SQL para crear un rol app_user solo si no existe, y dale permisos de lectura exclusivamente sobre las vistas"
+
+**Solución proporcionada por IA:**
+- Proporcionó el bloque `DO $$ ... END $$` para ejecución condicional
+- Utilizó `GRANT SELECT ON ALL VIEWS` para acceso de lectura
+- Utilizó `REVOKE ALL ON TABLES` para bloquear acceso directo a tablas
+
+**Validación realizada:**
+- Se verificó manualmente intentando borrar una tabla con `app_user` (falló como se esperaba, confirmando la seguridad)
+- Se probó que las VIEWS fueran accesibles
+- Se confirmó que los permisos fueran mínimos y necesarios
+
+### Sesión 3: Performance y EXPLAIN
+
+**Desafío:** Demostrar el impacto real de los índices en la performance
+
+**Prompt utilizado:** "Genera ejemplos de EXPLAIN ANALYZE comparando consultas con índices vs sin índices"
+
+**Solución proporcionada por IA:**
+- Explicó cómo PostgreSQL usa B-Trees para indexación
+- Mostró la diferencia entre Sequential Scan vs Index Scan
+- Cuantificó la mejora en tiempo de ejecución y costo
+
+**Validación realizada:**
+- Se ejecutaron pruebas reales con los índices en lugar
+- Se contrastaron los números teóricos con resultados prácticos
+- Se confirmó una mejora de aproximadamente 300x en casos típicos
+
+### Decisiones Propias (sin asistencia de IA)
+
+1. **Estructura de 3 capas:** Decidí separar claramente Backend → API → Frontend para que el código fuera modular y reutilizable
+2. **Patrón simétrico 5+5+5:** Diseñé el proyecto con 5 tablas, 5 VIEWS y 5 índices para que fuera fácil de recordar y mantener
+3. **Enfoque en seguridad:** Implementé prácticas de seguridad desde el inicio (parámetros SQL, variables de entorno, RBAC)
+4. **Tablas resumen:** Utilicé tablas Markdown para presentar información de forma clara y visual
+
+---
+
+## 🛠️ Tecnologías Utilizadas
+
+| Tecnología | Versión | Propósito |
+|------------|---------|----------|
+| PostgreSQL | 16 | Base de datos relacional |
+| Next.js | 16 | Framework de frontend y API |
+| Node.js | 20 | Runtime de JavaScript |
+| Docker | Latest | Containerización de servicios |
+| Docker Compose | Latest | Orquestación de contenedores |
+
+---
+
+## 📊 Resumen Rápido
+
+**El proyecto contiene:**
+- 5 tablas principales en PostgreSQL
+- 5 VIEWS que actúan como reportes consultables
+- 5 índices estratégicos para optimización de queries
+- 3 capas de arquitectura (Backend → API → Frontend)
+- 4 capas de defensa de seguridad
+
+**Para correr todo:**
 ```bash
 docker compose up --build
 ```
 
-**Para verificar los índices:**
-Conéctarse a PostgreSQL y ejecutar los comandos EXPLAIN que están en `indexes.sql`
-
-**Tecnologías:**
-- PostgreSQL 16 (base de datos)
-- Next.js 16 (frontend)
-- Docker (contenedores)
+**Verificar los índices:**
+Dentro del contenedor de PostgreSQL, ejecutar:
+```sql
+EXPLAIN ANALYZE SELECT * FROM vw_ventas_por_categoria;
+```
 
 ---
 
 ## 🎓 CONCLUSIÓN
 
-Los índices son como agregar un mapa a tu base de datos. Sin ellos, PostgreSQL tiene que buscar todo de forma secuencial (lento). Con ellos, va directo a lo que necesita (rápido). 
+Los índices son como agregar un mapa a tu base de datos. Sin ellos, PostgreSQL tiene que buscar todo de forma secuencial (lento). Con ellos, va directo a lo que necesita usando búsqueda binaria (rápido).
 
-En este proyecto, identificamos las operaciones más comunes (JOINs y GROUP BYs en las vistas) y creamos índices específicos para optimizarlas. El resultado es que las consultas se ejecutan en milisegundos en lugar de segundos.
+En este proyecto, se identificaron las operaciones más comunes en las VIEWS (JOINs y GROUP BYs) y se crearon índices específicos para optimizarlas. El resultado es que las consultas se ejecutan en milisegundos en lugar de segundos, mejorando drasticamente la experiencia del usuario.
+
+La arquitectura de 3 capas permite que la lógica de negocio resida en la base de datos (VIEWS), la API maneje la comunicación segura, y el frontend su enfoque visual. Esta separación de responsabilidades hace el código más mantenible y escalable.

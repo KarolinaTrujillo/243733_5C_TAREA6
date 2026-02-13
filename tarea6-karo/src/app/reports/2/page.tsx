@@ -1,28 +1,52 @@
-export const dynamic = 'force-dynamic';
-import { pool } from '@/lib/db';
-import { z } from 'zod';
+'use client';
 
-const filterSchema = z.object({
-  minVentas: z.string().optional(),
-});
+export const dynamic = "force-dynamic";
 
-export default async function Reporte2({ searchParams }: any) {
-  const params = await searchParams;
-  
-  const validated = filterSchema.safeParse(params);
-  const minVentas = validated.success && validated.data.minVentas 
-    ? Number(validated.data.minVentas) 
-    : null;
+import { useEffect, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 
-  let query = 'SELECT * FROM vw_productos_mas_vendidos';
-  const values = [];
+interface Reporte2Data {
+  rows: any[];
+  total: number;
+}
 
-  if (minVentas && minVentas > 0) {
-    query += ' WHERE total_vendido >= $1';
-    values.push(minVentas);
-  }
+function Reporte2Content() {
+  const searchParams = useSearchParams();
+  const [data, setData] = useState<Reporte2Data | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const { rows } = await pool.query(query, values);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const minVentas = searchParams.get('minVentas');
+        const params = new URLSearchParams();
+        if (minVentas) {
+          params.append('minVentas', minVentas);
+        }
+
+        const response = await fetch(`/api/reports/2?${params}`, {
+          cache: 'no-store',
+        });
+
+        if (!response.ok) {
+          throw new Error('Error fetching data');
+        }
+
+        const result = await response.json();
+        setData(result);
+        setError(null);
+      } catch (err) {
+        setError('Error al cargar los datos');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [searchParams]);
 
   return (
     <div>
@@ -34,24 +58,39 @@ export default async function Reporte2({ searchParams }: any) {
         <button>Filtrar</button>
       </form>
 
-      <p><strong>Total de productos:</strong> {rows.length}</p>
+      {loading && <p>Cargando...</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
 
-      <table>
-        <thead>
-          <tr>
-            <th>Producto</th>
-            <th>Total vendido</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.producto_id}>
-              <td>{r.producto}</td>
-              <td>{r.total_vendido}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {data && (
+        <>
+          <p><strong>Total de productos:</strong> {data.total}</p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Total vendido</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.rows.map((r) => (
+                <tr key={r.producto_id}>
+                  <td>{r.producto}</td>
+                  <td>{r.total_vendido}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
     </div>
+  );
+}
+
+export default function Reporte2() {
+  return (
+    <Suspense fallback={<p>Cargando...</p>}>
+      <Reporte2Content />
+    </Suspense>
   );
 }

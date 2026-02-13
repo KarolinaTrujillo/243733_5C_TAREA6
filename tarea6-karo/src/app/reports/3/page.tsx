@@ -1,54 +1,67 @@
-export const dynamic = 'force-dynamic';
-import { pool } from '@/lib/db';
-import { z } from 'zod';
+'use client';
 
-const schema = z.object({
-  page: z.string().optional(),
-  limit: z.string().optional(),
-});
+export const dynamic = "force-dynamic";
 
-export default async function Reporte3({ searchParams }: any) {
-  const params = await searchParams;
+import { useEffect, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 
-  // Validar con Zod
-  const result = schema.safeParse(params);
-  
-  let page = 1;
-  let limit = 5;
+interface Reporte3Data {
+  rows: any[];
+  totalPagina: number;
+  page: number;
+  limit: number;
+}
 
-  if (result.success) {
-    if (result.data.page) {
-      const p = Number(result.data.page);
-      if (p > 0) page = p;
-    }
-    if (result.data.limit) {
-      const l = Number(result.data.limit);
-      if (l > 0 && l <= 20) limit = l;
-    }
-  }
+function Reporte3Content() {
+  const searchParams = useSearchParams();
+  const [data, setData] = useState<Reporte3Data | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const offset = (page - 1) * limit;
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const page = searchParams.get('page');
+        const limit = searchParams.get('limit');
+        const params = new URLSearchParams();
+        if (page) params.append('page', page);
+        if (limit) params.append('limit', limit);
 
-  // Query con paginación
-  const { rows } = await pool.query(
-    'SELECT * FROM vw_resumen_usuarios ORDER BY total_gastado DESC LIMIT $1 OFFSET $2',
-    [limit, offset]
-  );
+        const response = await fetch(`/api/reports/3?${params}`, {
+          cache: 'no-store',
+        });
 
-  // Calcular KPI
-  let totalPagina = 0;
-  for (const row of rows) {
-    totalPagina += Number(row.total_gastado);
-  }
+        if (!response.ok) {
+          throw new Error('Error fetching data');
+        }
+
+        const result = await response.json();
+        setData(result);
+        setError(null);
+      } catch (err) {
+        setError('Error al cargar los datos');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [searchParams]);
+
+  if (loading) return <p>Cargando...</p>;
+  if (error) return <p style={{ color: 'red' }}>{error}</p>;
+  if (!data) return <p>No hay datos</p>;
 
   return (
     <div>
       <h1>Resumen por Usuario</h1>
       <p>Órdenes y gasto total por usuario.</p>
 
-      <p><strong>Total en esta página:</strong> ${totalPagina.toFixed(2)}</p>
+      <p><strong>Total en esta página:</strong> ${data.totalPagina.toFixed(2)}</p>
 
-      <p>Página {page} - Mostrando {limit} registros</p>
+      <p>Página {data.page} - Mostrando {data.limit} registros</p>
 
       <table>
         <thead>
@@ -60,7 +73,7 @@ export default async function Reporte3({ searchParams }: any) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((r) => (
+          {data.rows.map((r) => (
             <tr key={r.usuario_id}>
               <td>{r.usuario}</td>
               <td>{r.total_ordenes}</td>
@@ -71,13 +84,21 @@ export default async function Reporte3({ searchParams }: any) {
         </tbody>
       </table>
 
-      {rows.length === 0 && <p>No hay datos en esta página.</p>}
+      {data.rows.length === 0 && <p>No hay datos en esta página.</p>}
 
       <p>
-        {page > 1 && <a href={`/reports/3?page=${page - 1}&limit=${limit}`}>Anterior</a>}
+        {data.page > 1 && <a href={`/reports/3?page=${data.page - 1}&limit=${data.limit}`}>Anterior</a>}
         {' '}
-        {rows.length > 0 && <a href={`/reports/3?page=${page + 1}&limit=${limit}`}>Siguiente</a>}
+        {data.rows.length > 0 && <a href={`/reports/3?page=${data.page + 1}&limit=${data.limit}`}>Siguiente</a>}
       </p>
     </div>
+  );
+}
+
+export default function Reporte3() {
+  return (
+    <Suspense fallback={<p>Cargando...</p>}>
+      <Reporte3Content />
+    </Suspense>
   );
 }

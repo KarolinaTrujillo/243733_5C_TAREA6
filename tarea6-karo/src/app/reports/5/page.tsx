@@ -1,12 +1,48 @@
-export const dynamic = 'force-dynamic';
-import { pool } from '@/lib/db';
+'use client';
 
-export default async function Reporte5() {
-  const { rows } = await pool.query(
-    'SELECT * FROM vw_ventas_por_orden'
-  );
+export const dynamic = "force-dynamic";
 
-  const top = rows[0]; // orden de mayor venta
+import { useEffect, useState, Suspense } from 'react';
+
+interface Reporte5Data {
+  rows: any[];
+  top: any | null;
+}
+
+function Reporte5Content() {
+  const [data, setData] = useState<Reporte5Data | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/reports/5', {
+          cache: 'no-store',
+        });
+
+        if (!response.ok) {
+          throw new Error('Error fetching data');
+        }
+
+        const result = await response.json();
+        setData(result);
+        setError(null);
+      } catch (err) {
+        setError('Error al cargar los datos');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) return <p>Cargando...</p>;
+  if (error) return <p style={{ color: 'red' }}>{error}</p>;
+  if (!data) return <p>No hay datos</p>;
 
   return (
     <div>
@@ -14,7 +50,7 @@ export default async function Reporte5() {
       <p>Listado de órdenes con total vendido.</p>
 
       <p>
-        <strong>Orden líder:</strong> {top.orden_id} (${top.total_orden})
+        <strong>Orden líder:</strong> {data.top?.orden_id} (${data.top?.total_orden})
       </p>
 
       <table>
@@ -25,7 +61,7 @@ export default async function Reporte5() {
           </tr>
         </thead>
         <tbody>
-          {rows.map((r) => (
+          {data.rows.map((r) => (
             <tr key={r.orden_id}>
               <td>{r.orden_id}</td>
               <td>${r.total_orden}</td>
@@ -34,5 +70,13 @@ export default async function Reporte5() {
         </tbody>
       </table>
     </div>
+  );
+}
+
+export default function Reporte5() {
+  return (
+    <Suspense fallback={<p>Cargando...</p>}>
+      <Reporte5Content />
+    </Suspense>
   );
 }

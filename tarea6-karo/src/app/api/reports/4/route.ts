@@ -1,4 +1,4 @@
-import { getReporte4Data } from '@/backend/reports/reporte4';
+import { getReporte4Data } from './service';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
